@@ -25,6 +25,11 @@ Core contributor to GeoServer, the leading open-source geospatial server. Delive
 ### [FAO DynaStore](fao-dynastore/) — FAO, 2020–present
 FAO's geospatial data infrastructure — cloud-native platform serving 30,000+ geospatial records with 99.9% SLA. Built on OGC STAC standard.
 
+### [Planner App](planner-app/) — Personal Project, 2026
+AI-powered leisure activity planner for iOS (Scriptable). Uses LLM APIs (Claude, Gemini, Perplexity) to discover activities and generates interactive Leaflet maps — fully on-device.
+
+- [Live repository](https://github.com/ccancellieri/plan-viewer)
+
 ### [Presentations](presentations/)
 Conference talks, technical presentations, and training materials.
 
