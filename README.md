@@ -25,6 +25,17 @@ Core contributor to GeoServer, the leading open-source geospatial server. Delive
 ### [FAO DynaStore](fao-dynastore/) — FAO, 2020–present
 FAO's geospatial data infrastructure — cloud-native platform serving 30,000+ geospatial records with 99.9% SLA. Built on OGC STAC standard.
 
+### [MCP Skill Hub](https://github.com/ccancellieri/mcp-skill-hub) — Personal Project, 2026
+
+A local MCP server that gives Claude Code semantic skill search, cross-session task memory, and zero-token command interception — all powered by Ollama running entirely on your machine.
+
+- Semantic search across 1,000+ skills using Ollama embeddings (nomic-embed-text)
+- UserPromptSubmit hook intercepts task commands before Claude sees them — zero API tokens
+- Cross-session task memory with local LLM compaction (deepseek-r1)
+- Three-signal learning: teachings, feedback, session history
+- Token savings profiling: tracks estimated Claude API cost reduction
+- Install with `./install.sh` — no external services required
+
 ### [Planner App](planner-app/) — Personal Project, 2026
 AI-powered leisure activity planner for iOS (Scriptable). Uses LLM APIs (Claude, Gemini, Perplexity) to discover activities and generates interactive Leaflet maps — fully on-device.
 
