@@ -1,0 +1,16 @@
+#---------------------------------------------------------------
+# Wifi credentials for DietPi first boot
+# Copy to dietpi-wifi.txt and fill in your actual values
+# Up to 10 networks supported (index 0..9); first one that connects wins
+# SECURITY: the SD card stores this in plaintext. Wipe after first boot.
+#---------------------------------------------------------------
+
+# Network 0 — primary
+aWIFI_SSID[0]='YOUR_WIFI_SSID'
+aWIFI_KEY[0]='YOUR_WIFI_PASSWORD'
+aWIFI_KEYMGR[0]='WPA-PSK'
+
+# Network 1 — optional fallback (e.g. mobile hotspot)
+aWIFI_SSID[1]=''
+aWIFI_KEY[1]=''
+aWIFI_KEYMGR[1]='WPA-PSK'

@@ -1,0 +1,37 @@
+#---------------------------------------------------------------
+# DietPi Configuration Template
+# Copy to dietpi.txt and fill in your actual values
+#---------------------------------------------------------------
+
+# Enable headless automation
+AUTO_SETUP_ENABLED=1
+AUTO_SETUP_AUTOMATED=1
+
+# Timezone - adjust for your region
+AUTO_SETUP_TIMEZONE=Europe/Rome
+
+# Hostname for the Pi on network
+AUTO_SETUP_HOSTNAME=pi-media
+
+# Root password - CHANGE THIS
+AUTO_SETUP_GLOBAL_PASSWORD=YOUR_SECURE_PASSWORD_HERE
+
+# Network
+AUTO_SETUP_NET_ETHERNET_ENABLED=1
+AUTO_SETUP_NET_WIFI_ENABLED=1
+
+# Swap file size (MB)
+AUTO_SWAP_SIZE=512
+
+# GPU memory split (MB) - set low for Pi Zero W
+GPU_MEM_SPLIT=16
+
+# SSH enabled
+AUTO_SETUP_SSH_OPENSSH_ENABLED=1
+AUTO_SETUP_SSH_PUBKEY_URL=
+
+# Software installations
+# 45 = Samba (network share)
+# 37 = ReadyMedia / MiniDLNA (DLNA media server)
+AUTO_SETUP_INSTALL_SOFTWARE_ID=45
+AUTO_SETUP_INSTALL_SOFTWARE_ID=37

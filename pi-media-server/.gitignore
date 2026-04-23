@@ -1,0 +1,15 @@
+# Credential files - keep locally only
+dietpi.txt
+dietpi-wifi.txt
+
+# DietPi image - too large for repo
+DietPi_RPi1-ARMv6-Trixie.img.xz
+DietPi_RPi1-ARMv6-Trixie.img.xz.sha256
+
+# OS files
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
