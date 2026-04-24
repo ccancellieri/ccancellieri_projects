@@ -1,0 +1,23 @@
+[Unit]
+Description=Offline voice control for MPD (Pocketsphinx)
+After=mpd.service sound.target
+Wants=mpd.service
+
+[Service]
+Type=simple
+User=carlo
+Group=audio
+# Set this to your USB mic's ALSA device. Find it with `arecord -l`.
+# Examples: "plughw:1,0", "plughw:CARD=Device,DEV=0", "default".
+Environment=VOICE_MIC_DEVICE=plughw:0,0
+Environment="VOICE_WAKE=hey pi"
+ExecStart=/usr/bin/python3 /opt/voice_control.py
+Restart=on-failure
+RestartSec=5
+# Voice recognition on Zero W chews ~200MB RSS; nice it down so MPD stays snappy
+Nice=5
+# Don't let it balloon memory if Sphinx leaks
+MemoryMax=300M
+
+[Install]
+WantedBy=multi-user.target

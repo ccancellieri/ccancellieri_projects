@@ -28,13 +28,16 @@ If any of these are blockers, a **Pi Zero 2 W** (same form factor, 4× cores, st
 
 1. Download DietPi for Zero W: <https://dietpi.com/#downloadinfo> → `Raspberry Pi` → `ARMv6 32-bit (Pi 1 / Zero / Zero W)`.
 2. Flash the `.img.xz` to the SD card with **Raspberry Pi Imager** or **balenaEtcher**.
-3. After flashing, the SD card appears as a `boot` volume on your Mac. Copy these three files into the root of that volume, **overwriting** the stock ones:
+3. Copy the template configs to real ones (real files are gitignored — they hold your wifi key + root password):
+   ```bash
+   cp dietpi.txt.example dietpi.txt
+   cp dietpi-wifi.txt.example dietpi-wifi.txt
+   ```
+   Then edit `dietpi.txt` and `dietpi-wifi.txt` and fill in your real wifi SSID + password + root password.
+4. After flashing, the SD card appears as a `boot` volume on your Mac. Copy these three files into the root of that volume, **overwriting** the stock ones:
    - `dietpi.txt`
    - `dietpi-wifi.txt`
    - `Automation_Custom_Script.sh`
-4. **Before ejecting:**
-   - Edit `dietpi-wifi.txt` → put your real SSID + password on lines 1 and 2.
-   - Edit `dietpi.txt` → change `AUTO_SETUP_GLOBAL_PASSWORD=changeme-pi-media` to something you'll remember.
 5. Eject, insert in the Zero W, connect powered hub + disks, apply power.
 
 **First boot takes 30–60 min on a Zero W.** Be patient — apt update + Samba + MiniDLNA install on a single ARMv6 core is slow. Pi reboots once, then is ready.
@@ -44,8 +47,64 @@ If any of these are blockers, a **Pi Zero 2 W** (same form factor, 4× cores, st
 | Service | Where | Purpose |
 |---|---|---|
 | ReadyMedia (MiniDLNA) | UPnP auto-discovery | Android TV's **VLC** / **Kodi** / native media player picks up "Pi Media" on the LAN |
-| Samba | `\\pi-media\media` or `\\<pi-ip>\media` | File browser from any device, user `dietpi` |
-| SSH | `ssh dietpi@pi-media.local` | Maintenance |
+| Samba | `\\pi-media\media` or `\\<pi-ip>\media` | File browser from any device, user `carlo` |
+| SSH | `ssh carlo@pi-media.local` | Maintenance (dietpi account locked post-setup) |
+| MPD + mpc | port `6600` on LAN | Music player daemon pointing at `/mnt`. Control from phone with M.A.L.P. (Android) / MALP (iOS). |
+| BlueZ + bluez-alsa | `bluetoothctl` | Pair any Echo as a Bluetooth speaker (one at a time). |
+| Voice control (pocketsphinx) | `voice-control.service` (disabled) | **Installed but disabled** — the ARMv6 CPU cannot do real-time STT. See section below. |
+
+## Audio path: MPD → Echo via Bluetooth
+
+Turn one of your Echos into a dumb Bluetooth speaker:
+
+1. On the Echo: *"Alexa, pair Bluetooth"* — it enters pairing mode.
+2. On the Pi: `sudo bluetoothctl` then:
+   ```
+   power on
+   agent on
+   default-agent
+   scan on
+   # wait for the Echo's MAC address to appear (e.g. AA:BB:CC:DD:EE:FF)
+   pair AA:BB:CC:DD:EE:FF
+   trust AA:BB:CC:DD:EE:FF
+   connect AA:BB:CC:DD:EE:FF
+   quit
+   ```
+3. Configure MPD's ALSA output to route through the Bluetooth sink (`bluealsa` ALSA plugin). Edit `/etc/mpd.conf`:
+   ```
+   audio_output {
+       type            "alsa"
+       name            "Echo Bluetooth"
+       device          "bluealsa:DEV=AA:BB:CC:DD:EE:FF,PROFILE=a2dp"
+       mixer_type      "software"
+   }
+   ```
+4. `sudo systemctl restart mpd` and test with `mpc play`.
+
+Only **one** Bluetooth speaker can be active at a time. Multi-room requires Snapcast clients, which Echos cannot run. Accept this limit — it's a firmware constraint on every Alexa device.
+
+## Controlling MPD from your phone
+
+No TV needed. Install:
+- **Android:** [M.A.L.P.](https://f-droid.org/packages/org.gateshipone.malp/) (F-Droid) — lightweight, works on old phones.
+- **iOS:** [MALP](https://apps.apple.com/app/malp/id1442462876).
+
+Point it at `pi-media.local` port `6600`. Browse `/mnt/New_Volume` directly, tap to play. Audio comes out of whichever Bluetooth speaker is currently paired.
+
+## Voice control — why it's installed-but-disabled
+
+I tried. The Pi Zero W 1.1 cannot do real-time speech-to-text. Here's why, so you don't waste hours debugging it:
+
+- **Zero W is BCM2835 — ARMv6 + VFPv2, no NEON.** Every modern speech stack (Vosk, Whisper, openWakeWord) requires NEON and either fails to install (no ARMv6 wheel) or segfaults on boot.
+- **Pocketsphinx installs cleanly** (Debian ships an armhf package). On Pi 4/Zero 2 W this works fine. On Zero W 1.1, `arecord | pocketsphinx_continuous` produces audio-buffer **overruns within 5 seconds** because the CPU can't keep up with real-time 16-kHz decoding. The service runs for ~10 seconds, the pipeline chokes, systemd logs "Deactivated successfully" but nothing has actually been transcribed.
+- **There is no ARMv6 software fix for this.** It's a raw-CPU ceiling. I left the files in place because:
+  - A **Pi Zero 2 W** is a drop-in replacement (same form factor, same GPIO, ~€18) with a quad-core ARMv7 + NEON. On that, pocketsphinx works fine. The service and script will just start working.
+  - Or: offload STT to your Mac. Pi captures + streams audio to the Mac, Mac runs whisper.cpp, returns text to the Pi. This needs a small Go/Python bridge — not in this repo yet.
+
+The files that are ready:
+- `voice_control.py` installed at `/opt/voice_control.py` on the Pi.
+- `voice-control.service` installed at `/etc/systemd/system/`. Enable with `sudo systemctl enable --now voice-control` **after** upgrading to Zero 2 W.
+- Grammar supported: `play`, `stop`, `pause`, `next`, `previous`, `louder`, `quieter`, `shuffle on/off`, `update library`, wake word `"hey pi"`.
 
 ## How disks are mounted
 
@@ -91,7 +150,10 @@ On the Android TV:
 
 ## Files in this folder
 
-- `dietpi.txt` — headless first-boot automation (Zero W tuned: 16 MB GPU, 512 MB swap, SMB+DLNA only)
-- `dietpi-wifi.txt` — SSID + password (edit before flashing)
+- `dietpi.txt.example` — template for headless first-boot automation (Zero W tuned: 16 MB GPU, 512 MB swap, SMB+DLNA only). Copy to `dietpi.txt` and fill in secrets — `dietpi.txt` is gitignored.
+- `dietpi-wifi.txt.example` — template for wifi credentials. Copy to `dietpi-wifi.txt` and fill in. `dietpi-wifi.txt` is gitignored.
 - `Automation_Custom_Script.sh` — runs once at end of first boot: fs drivers + udev auto-mount + SMB share + MiniDLNA pointing at /mnt
+- `voice_control.py` — pocketsphinx-based voice-command script (installed-but-disabled on Zero W; works on Zero 2 W / Pi 4).
+- `voice-control.service` — systemd unit for `voice_control.py`.
+- `flash.sh` — macOS SD-flashing helper with osascript sudo-askpass fallback.
 - `README.md` — this file
